@@ -15,7 +15,8 @@ const tsConfig = () =>
   "compilerOptions": {
     "lib": ["dom", "esnext"],
     "jsx": "react",
-    "jsxFactory": "JSX.h",
+    "jsxFactory": "jsx.h",
+    "jsxFragmentFactory": "jsx.fragment",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true
   }
@@ -29,7 +30,7 @@ const indexHtml = (title: string) =>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${title}</title>
-    <script src="./dist/index.js"></script>
+    <script src="./dist/index.js" async></script>
   </head>
   <body>
     <div id="app"></div>
@@ -39,12 +40,11 @@ const indexHtml = (title: string) =>
 
 const deps = () =>
   `export {
-  cached,
+  Cached,
   Component,
   createApplication,
-  JSX,
-  reactive,
-  watch,
+  jsx,
+  Reactive,
 } from "${config.cdn.main}";
 `;
 
@@ -86,14 +86,14 @@ createApplication(Main, style).then((ci) => {
 `;
 
 const componentController = () =>
-  `import { cached, Component, reactive } from "../../deps.ts";
+  `import { Cached, Component, Reactive } from "../../deps.ts";
 
-export default new Component(() => {
-  const text = reactive("This is an example text");
-  const textLower = cached(() => {
+export default new Component({}, () => {
+  const text = new Reactive("This is an example text");
+  const textLower = new Cached(() => {
     return text.value.toLowerCase();
   });
-  const textUpper = cached(() => {
+  const textUpper = new Cached(() => {
     return text.value.toUpperCase();
   });
   const textChange = (event: Event) => {
@@ -101,7 +101,7 @@ export default new Component(() => {
       text.value = (event.target as HTMLInputElement).value;
     }
   };
-  const count = reactive(0);
+  const count = new Reactive(0);
   return {
     text,
     textLower,
@@ -113,29 +113,29 @@ export default new Component(() => {
 `;
 
 const componentTemplate = () =>
-  `import { JSX } from "../../deps.ts";
+  `import { jsx } from "../../deps.ts";
 import controller from "./controller.ts";
 
-export default controller.render((state) => {
+export default controller.render(({ state }) => {
   return (
     <div class="main">
       <h1>Preface</h1>
       <div class="block">
         <h2>Reactivity</h2>
-        <input type="text" value={state.text} $input={state.textChange} />
-        &nbsp;(length: {state.text.length})
+        <input type="text" value={state.text.value} oninput={state.textChange} />
+        &nbsp;(length: {state.text.value.length})
         <br /><br />
-        Lower case : {state.textLower}
+        Lower case : {state.textLower.value}
         <br /><br />
-        Upper case : {state.textUpper}
+        Upper case : {state.textUpper.value}
       </div>
       <br />
       <div class="block">
         <h2>Button count</h2>
-        <button type="button" $click={() => (state.count += 1)}>
-          Number of Click{state.count > 1 && "s" || ""} : {state.count}
+        <button type="button" onclick={() => (state.count.value += 1)}>
+          Number of Click{state.count.value > 1 && "s" || ""} : {state.count.value}
         </button>&nbsp;
-        <button type="button" $click={() => (state.count = 0)}>
+        <button type="button" onclick={() => (state.count.value = 0)}>
           Reset
         </button>
       </div>
